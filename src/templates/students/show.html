@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}{{ student.full_name }} - Sistema de Estudiantes{% endblock %}
+{% block page_title %}Detalles del Estudiante{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Información Personal</h6>
+                <div>
+                    <a href="{{ url_for('students.edit', id=student.id) }}" class="btn btn-warning btn-sm">
+                        <i class="fas fa-edit me-2"></i>Editar
+                    </a>
+                    <a href="{{ url_for('students.index') }}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-arrow-left me-2"></i>Volver
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="40%">ID de Estudiante:</th>
+                                <td><strong>{{ student.student_id }}</strong></td>
+                            </tr>
+                            <tr>
+                                <th>Nombre Completo:</th>
+                                <td><strong>{{ student.full_name }}</strong></td>
+                            </tr>
+                            <tr>
+                                <th>Email:</th>
+                                <td>{{ student.email }}</td>
+                            </tr>
+                            <tr>
+                                <th>Teléfono:</th>
+                                <td>{{ student.phone or 'No especificado' }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="40%">Fecha de Nacimiento:</th>
+                                <td>{{ student.date_of_birth.strftime('%d/%m/%Y') if student.date_of_birth else 'No especificada' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Carrera:</th>
+                                <td>{{ student.major or 'No especificada' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Estado:</th>
+                                <td>
+                                    {% if student.is_active %}
+                                        <span class="badge bg-success">Activo</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Inactivo</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Fecha de Registro:</th>
+                                <td>{{ student.enrollment_date.strftime('%d/%m/%Y %H:%M') }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                {% if student.address %}
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6 class="font-weight-bold">Dirección:</h6>
+                        <p class="text-muted">{{ student.address }}</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Acciones</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('students.edit', id=student.id) }}" class="btn btn-warning">
+                        <i class="fas fa-edit me-2"></i>Editar Estudiante
+                    </a>
+                    
+                    <form method="POST" action="{{ url_for('students.toggle_status', id=student.id) }}" style="display: inline;">
+                        <button type="submit" class="btn btn-{{ 'warning' if student.is_active else 'success' }} w-100">
+                            <i class="fas fa-{{ 'pause' if student.is_active else 'play' }} me-2"></i>
+                            {{ 'Desactivar' if student.is_active else 'Activar' }} Estudiante
+                        </button>
+                    </form>
+                    
+                    <button type="button" class="btn btn-danger"
+                        data-id="{{ student.id }}"
+                        data-name="{{ student.full_name }}"
+                        onclick="handleClick(this)">
+                        <i class="fas fa-trash me-2"></i>Eliminar Estudiante
+                    </button>
+
+                    
+                    <a href="{{ url_for('students.index') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Volver a la Lista
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Información del Sistema</h6>
+            </div>
+            <div class="card-body">
+                <small class="text-muted">
+                    <strong>ID Interno:</strong> {{ student.id }}<br>
+                    <strong>Creado:</strong> {{ student.enrollment_date.strftime('%d/%m/%Y %H:%M:%S') }}<br>
+                    <strong>Última modificación:</strong> {{ student.enrollment_date.strftime('%d/%m/%Y %H:%M:%S') }}
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación para eliminar -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que quieres eliminar al estudiante <strong id="studentName"></strong>?</p>
+                <p class="text-danger">Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function confirmDelete(studentId, studentName) {
+    document.getElementById('studentName').textContent = studentName;
+    document.getElementById('deleteForm').action = '/students/' + studentId + '/delete';
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
+{% endblock %} 
