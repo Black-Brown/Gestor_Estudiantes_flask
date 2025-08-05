@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Estudiantes - Sistema de Estudiantes{% endblock %}
+{% block page_title %}Estudiantes{% endblock %}
+
+{% block content %}
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">Lista de Estudiantes</h6>
+        <a href="{{ url_for('students.new') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Nuevo Estudiante
+        </a>
+    </div>
+    <div class="card-body">
+        {% if students.items %}
+        <div class="table-responsive">
+            <table class="table table-bordered" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Email</th>
+                        <th>Teléfono</th>
+                        <th>Carrera</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students.items %}
+                    <tr>
+                        <td>{{ student.student_id }}</td>
+                        <td>{{ student.full_name }}</td>
+                        <td>{{ student.email }}</td>
+                        <td>{{ student.phone or 'No especificado' }}</td>
+                        <td>{{ student.major or 'No especificada' }}</td>
+                        <td>
+                            {% if student.is_active %}
+                                <span class="badge bg-success">Activo</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactivo</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('students.show', id=student.id) }}" class="btn btn-sm btn-info" title="Ver">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ url_for('students.edit', id=student.id) }}" class="btn btn-sm btn-warning" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-danger" title="Eliminar" 
+                                    data-id="{{ student.id }}"
+                                    data-name="{{ student.full_name }}"
+                                    onclick="handleDelete(this)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Paginación -->
+        {% if students.pages > 1 %}
+        <nav aria-label="Paginación de estudiantes">
+            <ul class="pagination justify-content-center">
+                {% if students.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('students.index', page=students.prev_num) }}">Anterior</a>
+                    </li>
+                {% endif %}
+                
+                {% for page_num in students.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num != students.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('students.index', page=page_num) }}">{{ page_num }}</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                        {% endif %}
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if students.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('students.index', page=students.next_num) }}">Siguiente</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">No hay estudiantes registrados</h5>
+            <p class="text-muted">Comienza agregando el primer estudiante al sistema.</p>
+            <a href="{{ url_for('students.new') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Agregar Estudiante
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal de confirmación para eliminar -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que quieres eliminar al estudiante <strong id="studentName"></strong>?</p>
+                <p class="text-danger">Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function handleDelete(button) {
+    const studentId = button.getAttribute('data-id');
+    const studentName = button.getAttribute('data-name');
+    
+    document.getElementById('studentName').textContent = studentName;
+    document.getElementById('deleteForm').action = '/students/' + studentId + '/delete';
+    
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+
+</script>
+{% endblock %} 

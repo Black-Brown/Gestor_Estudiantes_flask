@@ -5,12 +5,12 @@ import os
 # Import models
 from models.database import init_app, db
 from models.user import User
-# from models.student import Student
+from models.student import Student
 
 # Import controllers
 from controllers.auth import auth
-# from controllers.dashboard import dashboard
-# from controllers.students import students
+from controllers.dashboard import dashboard
+from controllers.students import students
 
 def create_app():
     app = Flask(__name__)
@@ -25,8 +25,8 @@ def create_app():
     
     # Registrar blueprints
     app.register_blueprint(auth, url_prefix='/auth')
-    # app.register_blueprint(dashboard, url_prefix='/dashboard')
-    # app.register_blueprint(students, url_prefix='/students')
+    app.register_blueprint(dashboard, url_prefix='/dashboard')
+    app.register_blueprint(students, url_prefix='/students')
     
     # Ruta raíz
     @app.route('/')
