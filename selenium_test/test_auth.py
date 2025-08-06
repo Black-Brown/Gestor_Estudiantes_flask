@@ -1,7 +1,7 @@
 import pytest
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
-from config_test import TestConfig, take_screenshot
+from conftest import TestConfig, take_screenshot
 
 class TestAuthentication:
     """
@@ -69,7 +69,7 @@ class TestAuthentication:
             assert "/auth/login" in driver.current_url
             
             # Verificar mensaje de error
-            error_message = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "alert-error")))
+            error_message = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "alert-danger")))
             assert "Usuario o contraseña incorrectos" in error_message.text
             
             take_screenshot(driver, "test_failed_login_invalid_credentials")
@@ -86,7 +86,11 @@ class TestAuthentication:
             # Ir a la página de login
             driver.get(f"{TestConfig.BASE_URL}/auth/login")
             
-            # Dejar campos vacíos y hacer click en login
+            # Llenar solo el campo de usuario y dejar la contraseña vacía
+            username_field = wait.until(EC.presence_of_element_located((By.NAME, "username")))
+            username_field.send_keys("admin")
+            
+            # Hacer click en el botón de login
             login_button = driver.find_element(By.CSS_SELECTOR, "button[type='submit']")
             login_button.click()
             
@@ -94,7 +98,7 @@ class TestAuthentication:
             assert "/auth/login" in driver.current_url
             
             # Verificar mensaje de error
-            error_message = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "alert-error")))
+            error_message = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "alert-danger")))
             assert "Usuario o contraseña incorrectos" in error_message.text
             
             take_screenshot(driver, "test_failed_login_empty_fields")

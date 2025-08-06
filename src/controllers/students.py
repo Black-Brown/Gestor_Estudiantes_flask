@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session
 from flask_login import login_required
 from models.student import Student
 from models.database import db
@@ -23,13 +23,22 @@ def index():
 def new():
     if request.method == 'POST':
         try:
+            # Validar que la fecha de nacimiento no esté vacía antes de procesarla
+            date_of_birth = None
+            if request.form.get('date_of_birth'):
+                try:
+                    date_of_birth = datetime.strptime(request.form['date_of_birth'], '%Y-%m-%d').date()
+                except ValueError:
+                    flash('Formato de fecha inválido', 'error')
+                    return render_template('students/new.html')
+            
             student = Student(
                 student_id=request.form['student_id'],
                 first_name=request.form['first_name'],
                 last_name=request.form['last_name'],
                 email=request.form['email'],
                 phone=request.form.get('phone'),
-                date_of_birth=datetime.strptime(request.form['date_of_birth'], '%Y-%m-%d').date() if request.form.get('date_of_birth') else None,
+                date_of_birth=date_of_birth,
                 major=request.form.get('major'),
                 address=request.form.get('address')
             )
@@ -37,7 +46,10 @@ def new():
             db.session.add(student)
             db.session.commit()
             
+            print(f"DEBUG: Estudiante creado exitosamente - {student.student_id}")
             flash('Estudiante creado exitosamente', 'success')
+            # Asegurar que la sesión se guarde
+            session.modified = True
             return redirect(url_for('students.index'))
             
         except Exception as e:
